@@ -1,5 +1,12 @@
 package huffmancode;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,40 +16,114 @@ import java.util.Map;
 public class HuffmanCodeDemo {
 
 	public static void main(String[] args) {
-		String string = "i like like like java do you like a java";
-		// 1.转换成2进制数组
-		byte[] bytes = string.getBytes();
-		// 2.获取每个字符节点出现的次数（字符：node.data 次数：node.weight)
-		List<Node> nodes = getNodes(bytes);
-		// 3.创建哈夫曼树
-		Node huffmanTreeRoot = createHuffmanTree(nodes);
-		// 4.生成哈夫曼编码
-		Map<Byte, String> map = getCodes(huffmanTreeRoot);
-		// 5.压缩数据
-		byte[] zip = zip(bytes, map);
 
-//		byte[] zip = huffmanInCode(content);
-//		System.out.println(Arrays.toString(zip));
+//		String src = "D:/src.txt";
+//		String dst = "D:/dst.zip";
+//		zipFile(src, dst);
 
-		byte[] huffmanDecode = huffmanDecode(map, zip);
-		System.out.println(new String(huffmanDecode));
+		String src = "D:/dst.zip";
+		String dst = "D:/src2.txt";
+		unZipFile(src, dst);
+		
+//		String string = "i like like like java do you like a java";
+//		// 1.转换成2进制数组
+//		byte[] bytes = string.getBytes();
+//		// 2.获取每个字符节点出现的次数（字符：node.data 次数：node.weight)
+//		List<Node> nodes = getNodes(bytes);
+//		// 3.创建哈夫曼树
+//		Node huffmanTreeRoot = createHuffmanTree(nodes);
+//		// 4.生成哈夫曼编码
+//		Map<Byte, String> map = getCodes(huffmanTreeRoot);
+//		// 5.压缩数据
+//		byte[] zip = zip(bytes, map);
+//		
+////		byte[] zip = huffmanInCode(bytes);
+////		System.out.println(Arrays.toString(zip));
+//
+//		
+//		byte[] huffmanDecode = huffmanDecode(map, zip); 
+//		System.out.println(new String(huffmanDecode));
+//		 
 
 	}
 
-	private static byte[] huffmanDecode(Map<Byte, String> huffmanCodes, byte[] huffmanBytes) {
+	public static void unZipFile(String zipFile, String dstFile) {
+
+		InputStream is = null;
+		ObjectInputStream ois = null;
+		OutputStream os = null;
+		try {
+			is = new FileInputStream(zipFile);
+			ois = new ObjectInputStream(is);
+			byte[] huffmanBytes = (byte[]) ois.readObject();
+
+			@SuppressWarnings("unchecked")
+			Map<Byte, String> huffmansCodes = (Map<Byte, String>) ois.readObject();
+			byte[] bytes = huffmanDecode(huffmansCodes, huffmanBytes);
+			os = new FileOutputStream(dstFile);
+			os.write(bytes);
+	
+		} catch (Exception e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				os.close();
+				ois.close();
+				is.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	public static void zipFile(String srcFile, String dstFile) {
+
+		FileInputStream is = null;
+		OutputStream os = null;
+		ObjectOutputStream oos = null;
+		try {
+			is = new FileInputStream(srcFile);
+			byte[] b = new byte[is.available()];
+			is.read(b);
+			// 获取编码后的文件字节数组
+			byte[] huffmanBytes = huffmanInCode(b);
+			os = new FileOutputStream(dstFile);
+			oos = new ObjectOutputStream(os);
+			oos.writeObject(huffmanBytes);
+			oos.writeObject(huffmanCodes);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+
+			try {
+				is.close();
+				oos.close();
+				os.close();
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	public static byte[] huffmanDecode(Map<Byte, String> huffmanCodes, byte[] huffmanBytes) {
 
 		StringBuilder stringBuilder = new StringBuilder();
+		
 		for (int i = 0; i < huffmanBytes.length; i++) {
 			boolean flag = (i == huffmanBytes.length - 1);
 			stringBuilder.append(byteToBitString(!flag, huffmanBytes[i]));
 		}
-
+		System.out.println(stringBuilder);
 		Map<String, Byte> map = new HashMap<String, Byte>();
 		for (Map.Entry<Byte, String> entry : huffmanCodes.entrySet()) {
 			map.put(entry.getValue(), entry.getKey());
 		}
-
-		List<Byte> list = new ArrayList<Byte>();
+		System.out.println(map.toString());
+		List<Byte> list = new ArrayList<>();
 		for (int i = 0; i < stringBuilder.length();) {
 			int count = 1;
 			boolean flag = true;
@@ -86,9 +167,8 @@ public class HuffmanCodeDemo {
 
 	}
 
-	public static byte[] huffmanInCode(String string) {
-		// 1.转换成2进制数组
-		byte[] bytes = string.getBytes();
+	public static byte[] huffmanInCode(byte[] bytes) {
+
 		// 2.获取每个字符节点出现的次数（字符：node.data 次数：node.weight)
 		List<Node> nodes = getNodes(bytes);
 		// 3.创建哈夫曼树
